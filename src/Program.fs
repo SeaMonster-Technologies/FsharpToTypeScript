@@ -56,10 +56,9 @@ module Generation =
 
         let asmFilter = @"SeaMonster.Domain.Process.RuleTypes"
         let destination = @"C:\tmp\ts-generation"
-
-
+        
         types
-        |> Array.filter (fun t -> t.FullName.StartsWith asmFilter)
+//        |> Array.filter (fun t -> t.FullName.StartsWith asmFilter)
         |> Array.choose FsImpl.tryWrap
         |> Array.map FsImpl.compile
         |> Array.map (writeCompilation destination)

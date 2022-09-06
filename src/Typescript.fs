@@ -9,11 +9,31 @@ type TSPrimitive =
     | Void
     | Number
     | String
+    | Bool
+    | Date
     override x.ToString() =
         match x with
         | Void -> "void"
         | Number -> "number"
         | String -> "string"
+        | Bool -> "boolean"
+        | Date -> "Date"
+
+    static member mappings =
+        [ typeof<unit>.Name, Void
+          typeof<int8>.Name, Number
+          typeof<int16>.Name, Number
+          typeof<int32>.Name, Number
+          typeof<int>.Name, Number
+          typeof<int64>.Name, Number
+          typeof<float>.Name, Number
+          typeof<double>.Name, Number
+          typeof<string>.Name, String
+          typeof<Guid>.Name, String
+          typeof<bool>.Name, Bool
+          typeof<DateTimeOffset>.Name, Date
+          typeof<DateTime>.Name, Date ]
+        |> Map.ofList
 
 type TSType =
     | Primitive of TSPrimitive
@@ -35,6 +55,9 @@ module Whitespace =
 
 module Templates =
 
+    [<Literal>]
+    let CaseSuffix = "Case"
+
     let importTemplate name =
         $"import {{ %s{name} }} from \"./%s{name}\""
 
@@ -51,13 +74,6 @@ export type %s{name} =
         """
 
 module Typescript =
-
-    let primitiveMappings =
-        [ typeof<unit>.Name, Void
-          typeof<int>.Name, Number
-          typeof<string>.Name, String
-          typeof<Guid>.Name, String ]
-        |> Map.ofList
 
     // Case order is significant; it dictates the order in which modifiers will be applied.
     type TSFieldModifier =
@@ -76,6 +92,7 @@ module Typescript =
 
     type TSInterface =
         { InterfaceName: string
+          IsCaseInterface: bool
           Fields: TSField [] }
 
     type TSUnion =
@@ -83,12 +100,12 @@ module Typescript =
           UnionCases: TSUnionCase [] }
 
     let toTsType propTypeName =
-        match primitiveMappings |> Map.tryFind propTypeName with
+        match TSPrimitive.mappings |> Map.tryFind propTypeName with
         | Some mapping -> Primitive mapping
         | None -> Custom propTypeName
 
     let rec getTypeMapping propertyType =
-        if isList propertyType then
+        if isListOrArray propertyType then
             let typeMapping, mods = getTypeMapping propertyType.GenericTypeArguments[0]
             typeMapping, TSArray :: mods
         elif isOption propertyType then
@@ -132,6 +149,7 @@ module Typescript =
             |> Array.map (convertRecordField parentTypeName)
 
         { InterfaceName = fieldInfo.Name
+          IsCaseInterface = true
           Fields = fields }
 
     let convertRecordType (recordType: Type) =
@@ -140,6 +158,7 @@ module Typescript =
             |> Array.map (convertRecordField recordType.Name)
 
         { InterfaceName = recordType.Name
+          IsCaseInterface = false
           Fields = fields }
 
     let convertUnionType (unionType: Type) =
@@ -162,17 +181,19 @@ module Typescript =
         fieldInterfaces
         |> Array.filter (fun i -> i.Fields.Length > 0)
 
-    let formatRecordField (f: TSField) =
-        let fieldName, fieldType =
-            f.FieldModifiers
-            |> List.sort
-            |> List.fold
-                (fun (fName, fType) fMod ->
-                    match fMod with
-                    | TSNullable -> fName, $"%s{fType} | null"
-                    | TSArray -> fName, $"%s{fType}[]")
-                (f.FieldName, f.FieldType)
+    let private applyFieldModifiers (f: TSField) =
+        f.FieldModifiers
+        |> List.sort
+        |> List.fold
+            (fun (fName, fType) fMod ->
+                match fMod with
+                | TSNullable -> fName, $"%s{fType} | null"
+                | TSArray -> fName, $"%s{fType}[]")
+            (f.FieldName, f.FieldType)
 
+
+    let formatRecordField (f: TSField) =
+        let fieldName, fieldType = applyFieldModifiers f
         $"%s{fieldName}: %s{fieldType}"
 
     let formatRecordFields (fields: TSField []) =
@@ -180,9 +201,10 @@ module Typescript =
         |> Array.map formatRecordField
         |> String.concat $"%s{Whitespace.newline}%s{Whitespace.tab}"
 
-    let formatUnionCases (fields: TSField []) =
-        fields
-        |> Array.map (fun f -> $"%s{f.FieldName}: %s{f.FieldType}")
+    let formatUnionCase (case: TSUnionCase) =
+        match case.CaseType with
+        | Some t -> $"| {{ %s{toLowerFirst case.CaseName}: %s{t}%s{Templates.CaseSuffix} }}"
+        | None -> $"| '%s{toLowerFirst case.CaseName}'"
 
     let compileImports (fields: TSField []) =
         fields
@@ -192,9 +214,15 @@ module Typescript =
         |> String.concat Whitespace.newline
 
     let compileInterfaceNoImports (tsInterface: TSInterface) =
+        let suffix =
+            if tsInterface.IsCaseInterface then
+                Templates.CaseSuffix
+            else
+                ""
+
         tsInterface.Fields
         |> formatRecordFields
-        |> Templates.interfaceTemplate tsInterface.InterfaceName
+        |> Templates.interfaceTemplate $"%s{tsInterface.InterfaceName}%s{suffix}"
 
     let compileInterface (tsInterface: TSInterface) =
 
@@ -202,7 +230,7 @@ module Typescript =
 
         let compiledInterface = compileInterfaceNoImports tsInterface
 
-        $"%s{compiledImports}%s{Whitespace.newline}%s{compiledInterface}"
+        $"%s{compiledImports}%s{compiledInterface}"
 
     let compileUnion (tsUnion: TSUnion, tsInterfaces: TSInterface []) =
 
@@ -210,27 +238,28 @@ module Typescript =
             match tsInterfaces with
             | [||] -> "", ""
             | _ ->
-                tsInterfaces
-                |> Array.map compileInterfaceNoImports
-                |> String.concat $"%s{Whitespace.newline}%s{Whitespace.newline}",
+                let interfaces =
+                    tsInterfaces
+                    |> Array.map compileInterfaceNoImports
+                    |> String.concat $"%s{Whitespace.newline}"
 
-                tsInterfaces
-                |> Array.collect (fun i -> i.Fields)
-                |> compileImports
+                let imports =
+                    tsInterfaces
+                    |> Array.collect (fun i -> i.Fields)
+                    |> compileImports
+
+                $"%s{interfaces}", $"%s{imports}"
+
 
         let compiledCases =
             tsUnion.UnionCases
-            |> Array.map (fun c ->
-                match c.CaseType with
-                | Some t -> $"| %s{t}"
-                | None -> $"| '%s{c.CaseName}'")
+            |> Array.map formatUnionCase
             |> String.concat $"%s{Whitespace.newline}%s{Whitespace.tab}"
 
         let compiledUnion =
             compiledCases
             |> Templates.unionTemplate tsUnion.UnionName
 
-        let compiled =
-            $"%s{compiledImports}%s{Whitespace.newline}%s{compiledInterfaces}%s{Whitespace.newline}%s{Whitespace.newline}%s{compiledUnion}"
+        let compiled = $"%s{compiledImports}%s{compiledInterfaces}%s{compiledUnion}"
 
         compiled

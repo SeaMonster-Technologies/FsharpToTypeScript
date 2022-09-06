@@ -16,9 +16,10 @@ module Prelude =
         t.IsGenericType
         && t.GetGenericTypeDefinition() = typedefof<Microsoft.FSharp.Core.Option<_>>
 
-    let isList (t: Type) =
+    let isListOrArray (t: Type) =
         t.IsGenericType
-        && t.GetGenericTypeDefinition() = typedefof<Microsoft.FSharp.Collections.List<_>>
+        && (t.GetGenericTypeDefinition() = typedefof<Microsoft.FSharp.Collections.List<_>>
+            || t.GetGenericTypeDefinition() = typedefof<Microsoft.FSharp.Core.array<_>>)
 
     let isResult (t: Type) =
         t.IsGenericType
@@ -35,7 +36,7 @@ module Prelude =
         |> String.concat ""
 
 module PreDefinitions =
-    
+
     /// Typescript version of Result<'T, 'Err>
     let TSResult =
         """
