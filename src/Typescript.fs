@@ -28,6 +28,7 @@ type TSPrimitive =
           typeof<int64>.Name, Number
           typeof<float>.Name, Number
           typeof<double>.Name, Number
+          typeof<decimal>.Name, Number
           typeof<string>.Name, String
           typeof<Guid>.Name, String
           typeof<bool>.Name, Bool
@@ -35,10 +36,16 @@ type TSPrimitive =
           typeof<DateTime>.Name, Date ]
         |> Map.ofList
 
+// Case order is significant; it dictates the order in which modifiers will be applied.
+type TSFieldModifier =
+    | TSArray
+    | TSNullable
+
 type TSType =
     | Primitive of TSPrimitive
     | Result of TSType * TSType
     | Custom of string
+    | Generic of string * (TSType * TSFieldModifier list) []
 
 module Whitespace =
 
@@ -75,11 +82,6 @@ export type %s{name} =
 
 module Typescript =
 
-    // Case order is significant; it dictates the order in which modifiers will be applied.
-    type TSFieldModifier =
-        | TSArray
-        | TSNullable
-
     type TSField =
         { FieldName: string
           FieldType: string
@@ -93,6 +95,7 @@ module Typescript =
     type TSInterface =
         { InterfaceName: string
           IsCaseInterface: bool
+          GenericArgs: string []
           Fields: TSField [] }
 
     type TSUnion =
@@ -115,18 +118,33 @@ module Typescript =
             let aMapping, aMods = getTypeMapping propertyType.GenericTypeArguments[0]
             let errMapping, errMods = getTypeMapping propertyType.GenericTypeArguments[1]
             Result(aMapping, errMapping), aMods @ errMods
+        elif propertyType.IsGenericType then
+            let genericTypes =
+                propertyType.GenericTypeArguments
+                |> Array.map getTypeMapping
+
+            let name = withoutGenericMangling propertyType.Name
+            Generic (name, genericTypes), []
         else
             toTsType propertyType.Name, []
 
     let convertRecordField parentTypeName (fieldInfo: PropertyInfo) =
         let tsType, tMods = getTypeMapping fieldInfo.PropertyType
 
+        let rec getGenericImports (t: Type) =
+            if t.IsGenericType then
+                t.GenericTypeArguments
+                |> Array.collect getGenericImports
+            elif t.IsGenericTypeParameter then
+                [||]
+            else
+                [| t.Name |]
+
         let rec fmtType tsType =
             match tsType with
             | Custom t ->
                 t,
-                if t <> parentTypeName then
-                    [ t ]
+                if t <> parentTypeName then getGenericImports fieldInfo.PropertyType |> List.ofArray
                 else
                     [] // Don't import types that fields that refer to their parent types
             | Primitive t -> string t, []
@@ -135,6 +153,11 @@ module Typescript =
                 let errType, errImports = fmtType err
                 let imports = aImports @ errImports
                 $"Result<%s{aType}, %s{errType}>", imports
+            | Generic (name, args) ->
+                let args, imports = args |> Array.map (fun (t, mods) -> fmtType t) |> Array.unzip
+                let fmtArgs = args |> String.concat ","
+                let imports = imports |> List.ofArray |> List.concat
+                $"%s{name}<%s{fmtArgs}>", name :: imports
 
         let fType, imports = fmtType tsType
 
@@ -149,6 +172,7 @@ module Typescript =
             |> Array.map (convertRecordField parentTypeName)
 
         { InterfaceName = fieldInfo.Name
+          GenericArgs = [||]
           IsCaseInterface = true
           Fields = fields }
 
@@ -157,7 +181,16 @@ module Typescript =
             FSharpType.GetRecordFields recordType
             |> Array.map (convertRecordField recordType.Name)
 
-        { InterfaceName = recordType.Name
+        let interfaceName, genericArgs =
+            if recordType.IsGenericType then
+                $"%s{withoutGenericMangling recordType.Name}",
+                recordType.GetGenericArguments()
+                |> Array.map (fun t -> t.Name)
+            else
+                recordType.Name, [||]
+
+        { InterfaceName = interfaceName
+          GenericArgs = genericArgs
           IsCaseInterface = false
           Fields = fields }
 
@@ -220,9 +253,16 @@ module Typescript =
             else
                 ""
 
+        let interfaceName =
+            match tsInterface.GenericArgs with
+            | [||] -> tsInterface.InterfaceName
+            | _ ->
+                let args = tsInterface.GenericArgs |> String.concat ","
+                $"%s{tsInterface.InterfaceName}<%s{args}>"
+
         tsInterface.Fields
         |> formatRecordFields
-        |> Templates.interfaceTemplate $"%s{tsInterface.InterfaceName}%s{suffix}"
+        |> Templates.interfaceTemplate $"%s{interfaceName}%s{suffix}"
 
     let compileInterface (tsInterface: TSInterface) =
 

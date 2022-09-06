@@ -35,6 +35,12 @@ module Prelude =
         }
         |> String.concat ""
 
+    let withoutGenericMangling (str: string) =
+        if str.Contains '`' then
+            str.Substring(0, str.IndexOf('`'))
+        else
+            str
+
 module PreDefinitions =
 
     /// Typescript version of Result<'T, 'Err>

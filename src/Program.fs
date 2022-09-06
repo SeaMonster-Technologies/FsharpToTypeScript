@@ -34,7 +34,7 @@ module Generation =
                 { FileName = t.Name
                   Contents = compileUnion (tsUnion, tsInterfaces) }
             | Record (t, tsInterface) ->
-                { FileName = t.Name
+                { FileName = withoutGenericMangling t.Name
                   Contents = compileInterface tsInterface }
 
     let writeCompilation path compilationUnit =
@@ -54,7 +54,7 @@ module Generation =
 
         let types = asm.GetTypes()
 
-        let asmFilter = @"SeaMonster.Domain.Process.RuleTypes"
+        let asmFilter = @"SeaMonster.Domain.Filters.CommonApiTypes"
         let destination = @"C:\tmp\ts-generation"
         
         types
