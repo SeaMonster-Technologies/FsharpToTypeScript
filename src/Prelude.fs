@@ -5,11 +5,13 @@ open Microsoft.FSharp.Reflection
 
 [<AutoOpen>]
 module Prelude =
-    
+
     /// .NET compiles union cases into their own types that inherit from the base union type.
     /// This utility function helps identify the base union type needed for TS generation.
-    let isUnionBase t = FSharpType.IsUnion t && not (FSharpType.IsUnion t.BaseType)
-    
+    let isUnionBase t =
+        FSharpType.IsUnion t
+        && not (FSharpType.IsUnion t.BaseType)
+
     let isOption (t: Type) =
         t.IsGenericType
         && t.GetGenericTypeDefinition() = typedefof<Microsoft.FSharp.Core.Option<_>>
@@ -17,6 +19,10 @@ module Prelude =
     let isList (t: Type) =
         t.IsGenericType
         && t.GetGenericTypeDefinition() = typedefof<Microsoft.FSharp.Collections.List<_>>
+
+    let isResult (t: Type) =
+        t.IsGenericType
+        && t.GetGenericTypeDefinition() = typedefof<Microsoft.FSharp.Core.Result<_, _>>
 
     let toLowerFirst (str: string) =
         seq {
@@ -27,3 +33,13 @@ module Prelude =
                     string <| str[i]
         }
         |> String.concat ""
+
+module PreDefinitions =
+    
+    /// Typescript version of Result<'T, 'Err>
+    let TSResult =
+        """
+type Result<T, Err> =
+    | { ok: T }
+    | { error: Err }
+"""

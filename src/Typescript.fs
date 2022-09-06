@@ -2,15 +2,23 @@
 
 open System
 open System.Reflection
+open FsTsGeneration
 open Microsoft.FSharp.Reflection
 
-type TSType =
+type TSPrimitive =
+    | Void
     | Number
     | String
     override x.ToString() =
         match x with
+        | Void -> "void"
         | Number -> "number"
         | String -> "string"
+
+type TSType =
+    | Primitive of TSPrimitive
+    | Result of TSType * TSType
+    | Custom of string
 
 module Whitespace =
 
@@ -45,14 +53,22 @@ export type %s{name} =
 module Typescript =
 
     let primitiveMappings =
-        [ typeof<int>.Name, Number
-          typeof<string>.Name, String ]
+        [ typeof<unit>.Name, Void
+          typeof<int>.Name, Number
+          typeof<string>.Name, String
+          typeof<Guid>.Name, String ]
         |> Map.ofList
+
+    // Case order is significant; it dictates the order in which modifiers will be applied.
+    type TSFieldModifier =
+        | TSArray
+        | TSNullable
 
     type TSField =
         { FieldName: string
           FieldType: string
-          IsTypeImported: bool }
+          Imports: string []
+          FieldModifiers: TSFieldModifier list }
 
     type TSUnionCase =
         { CaseName: string
@@ -65,43 +81,55 @@ module Typescript =
     type TSUnion =
         { UnionName: string
           UnionCases: TSUnionCase [] }
-        
-    type TSTypeModifier =
-        | TSArray
-        | TSNullable
 
-    let getTypeMapping propTypeName =
+    let toTsType propTypeName =
         match primitiveMappings |> Map.tryFind propTypeName with
-        | Some mapping -> string mapping, false
-        | None -> propTypeName, true
+        | Some mapping -> Primitive mapping
+        | None -> Custom propTypeName
 
-    let convertRecordField (fieldInfo: PropertyInfo) =
-        let (fType, imported), nameSuffix =
-            if isList fieldInfo.PropertyType then
-                let name, imported =
-                    getTypeMapping
-                        fieldInfo.PropertyType.GenericTypeArguments[0]
-                            .Name
+    let rec getTypeMapping propertyType =
+        if isList propertyType then
+            let typeMapping, mods = getTypeMapping propertyType.GenericTypeArguments[0]
+            typeMapping, TSArray :: mods
+        elif isOption propertyType then
+            let typeMapping, mods = getTypeMapping propertyType.GenericTypeArguments[0]
+            typeMapping, TSNullable :: mods
+        elif isResult propertyType then
+            let aMapping, aMods = getTypeMapping propertyType.GenericTypeArguments[0]
+            let errMapping, errMods = getTypeMapping propertyType.GenericTypeArguments[1]
+            Result(aMapping, errMapping), aMods @ errMods
+        else
+            toTsType propertyType.Name, []
 
-                ($"%s{name}[]", imported), ""
-            elif isOption fieldInfo.PropertyType then
-                getTypeMapping
-                    fieldInfo.PropertyType.GenericTypeArguments[0]
-                        .Name,
-                "?"
-            else
-                getTypeMapping fieldInfo.PropertyType.Name, ""
+    let convertRecordField parentTypeName (fieldInfo: PropertyInfo) =
+        let tsType, tMods = getTypeMapping fieldInfo.PropertyType
 
-        { FieldName =
-            $"%s{fieldInfo.Name}%s{nameSuffix}"
-            |> toLowerFirst
+        let rec fmtType tsType =
+            match tsType with
+            | Custom t ->
+                t,
+                if t <> parentTypeName then
+                    [ t ]
+                else
+                    [] // Don't import types that fields that refer to their parent types
+            | Primitive t -> string t, []
+            | Result (a, err) ->
+                let aType, aImports = fmtType a
+                let errType, errImports = fmtType err
+                let imports = aImports @ errImports
+                $"Result<%s{aType}, %s{errType}>", imports
+
+        let fType, imports = fmtType tsType
+
+        { FieldName = toLowerFirst fieldInfo.Name
           FieldType = fType
-          IsTypeImported = imported }
+          Imports = Array.ofList imports
+          FieldModifiers = tMods }
 
-    let convertUnionCase (fieldInfo: UnionCaseInfo) =
+    let convertUnionCase parentTypeName (fieldInfo: UnionCaseInfo) =
         let fields =
             fieldInfo.GetFields()
-            |> Array.map convertRecordField
+            |> Array.map (convertRecordField parentTypeName)
 
         { InterfaceName = fieldInfo.Name
           Fields = fields }
@@ -109,7 +137,7 @@ module Typescript =
     let convertRecordType (recordType: Type) =
         let fields =
             FSharpType.GetRecordFields recordType
-            |> Array.map convertRecordField
+            |> Array.map (convertRecordField recordType.Name)
 
         { InterfaceName = recordType.Name
           Fields = fields }
@@ -117,7 +145,7 @@ module Typescript =
     let convertUnionType (unionType: Type) =
         let fieldInterfaces =
             FSharpType.GetUnionCases unionType
-            |> Array.map convertUnionCase
+            |> Array.map (convertUnionCase unionType.Name)
 
         let cases: TSUnionCase [] =
             fieldInterfaces
@@ -134,9 +162,22 @@ module Typescript =
         fieldInterfaces
         |> Array.filter (fun i -> i.Fields.Length > 0)
 
+    let formatRecordField (f: TSField) =
+        let fieldName, fieldType =
+            f.FieldModifiers
+            |> List.sort
+            |> List.fold
+                (fun (fName, fType) fMod ->
+                    match fMod with
+                    | TSNullable -> fName, $"%s{fType} | null"
+                    | TSArray -> fName, $"%s{fType}[]")
+                (f.FieldName, f.FieldType)
+
+        $"%s{fieldName}: %s{fieldType}"
+
     let formatRecordFields (fields: TSField []) =
         fields
-        |> Array.map (fun f -> $"%s{f.FieldName}: %s{f.FieldType}")
+        |> Array.map formatRecordField
         |> String.concat $"%s{Whitespace.newline}%s{Whitespace.tab}"
 
     let formatUnionCases (fields: TSField []) =
@@ -145,11 +186,7 @@ module Typescript =
 
     let compileImports (fields: TSField []) =
         fields
-        |> Array.choose (fun f ->
-            if f.IsTypeImported then
-                Some f.FieldType
-            else
-                None)
+        |> Array.collect (fun f -> f.Imports)
         |> Array.distinct
         |> Array.map Templates.importTemplate
         |> String.concat Whitespace.newline
