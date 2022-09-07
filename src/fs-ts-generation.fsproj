@@ -9,6 +9,9 @@
   <ItemGroup>
     <Compile Include="Prelude.fs" />
     <Compile Include="Typescript.fs" />
+    <Compile Include="TSImpl.fs" />
+    <Compile Include="PreDefinitions.fs" />
+    <Compile Include="Generation.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
 

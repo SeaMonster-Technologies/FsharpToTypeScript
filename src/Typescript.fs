@@ -5,6 +5,7 @@ open System.Reflection
 open FsTsGeneration
 open Microsoft.FSharp.Reflection
 
+
 type TSPrimitive =
     | Void
     | Number
@@ -43,8 +44,8 @@ type TSFieldModifier =
 
 type TSType =
     | Primitive of TSPrimitive
-    | Result of TSType * TSType
     | Custom of string
+    | GenericParameter of string
     | Generic of string * (TSType * TSFieldModifier list) []
 
 module Whitespace =
@@ -65,8 +66,13 @@ module Templates =
     [<Literal>]
     let CaseSuffix = "Case"
 
+    [<Literal>]
+    let Result = "Result"
+
     let importTemplate name =
         $"import {{ %s{name} }} from \"./%s{name}\""
+
+    let exportAllTemplate name = $"export * from \"./%s{name}\""
 
     let interfaceTemplate name fields =
         $"""
@@ -102,10 +108,11 @@ module Typescript =
         { UnionName: string
           UnionCases: TSUnionCase [] }
 
-    let toTsType propTypeName =
-        match TSPrimitive.mappings |> Map.tryFind propTypeName with
+    let toTsType (propType: Type) =
+        match TSPrimitive.mappings |> Map.tryFind propType.Name with
         | Some mapping -> Primitive mapping
-        | None -> Custom propTypeName
+        | None when propType.IsGenericTypeParameter -> GenericParameter propType.Name
+        | None -> Custom propType.Name
 
     let rec getTypeMapping propertyType =
         if isListOrArray propertyType then
@@ -115,18 +122,18 @@ module Typescript =
             let typeMapping, mods = getTypeMapping propertyType.GenericTypeArguments[0]
             typeMapping, TSNullable :: mods
         elif isResult propertyType then
-            let aMapping, aMods = getTypeMapping propertyType.GenericTypeArguments[0]
-            let errMapping, errMods = getTypeMapping propertyType.GenericTypeArguments[1]
-            Result(aMapping, errMapping), aMods @ errMods
+            let aMapping = getTypeMapping propertyType.GenericTypeArguments[0]
+            let errMapping = getTypeMapping propertyType.GenericTypeArguments[1]
+            Generic(Templates.Result, [| aMapping; errMapping |]), []
         elif propertyType.IsGenericType then
             let genericTypes =
                 propertyType.GenericTypeArguments
                 |> Array.map getTypeMapping
 
             let name = withoutGenericMangling propertyType.Name
-            Generic (name, genericTypes), []
+            Generic(name, genericTypes), []
         else
-            toTsType propertyType.Name, []
+            toTsType propertyType, []
 
     let convertRecordField parentTypeName (fieldInfo: PropertyInfo) =
         let tsType, tMods = getTypeMapping fieldInfo.PropertyType
@@ -144,17 +151,19 @@ module Typescript =
             match tsType with
             | Custom t ->
                 t,
-                if t <> parentTypeName then getGenericImports fieldInfo.PropertyType |> List.ofArray
+                if t <> parentTypeName then
+                    [ t ]
                 else
                     [] // Don't import types that fields that refer to their parent types
+            | GenericParameter t -> t, []
             | Primitive t -> string t, []
-            | Result (a, err) ->
-                let aType, aImports = fmtType a
-                let errType, errImports = fmtType err
-                let imports = aImports @ errImports
-                $"Result<%s{aType}, %s{errType}>", imports
             | Generic (name, args) ->
-                let args, imports = args |> Array.map (fun (t, mods) -> fmtType t) |> Array.unzip
+                // TODO apply modifications to generic arguments
+                let args, imports =
+                    args
+                    |> Array.map (fun (t, mods) -> fmtType t)
+                    |> Array.unzip
+
                 let fmtArgs = args |> String.concat ","
                 let imports = imports |> List.ofArray |> List.concat
                 $"%s{name}<%s{fmtArgs}>", name :: imports

@@ -19,7 +19,8 @@ module Prelude =
     let isListOrArray (t: Type) =
         t.IsGenericType
         && (t.GetGenericTypeDefinition() = typedefof<Microsoft.FSharp.Collections.List<_>>
-            || t.GetGenericTypeDefinition() = typedefof<Microsoft.FSharp.Core.array<_>>)
+            || t.GetGenericTypeDefinition() = typedefof<Microsoft.FSharp.Core.array<_>>
+            || t.GetGenericTypeDefinition() = typedefof<System.Collections.Generic.IEnumerable<_>>)
 
     let isResult (t: Type) =
         t.IsGenericType
@@ -40,13 +41,3 @@ module Prelude =
             str.Substring(0, str.IndexOf('`'))
         else
             str
-
-module PreDefinitions =
-
-    /// Typescript version of Result<'T, 'Err>
-    let TSResult =
-        """
-type Result<T, Err> =
-    | { ok: T }
-    | { error: Err }
-"""
