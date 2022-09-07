@@ -25,7 +25,7 @@ module Program =
         
         let inputAssembly = results.GetResult InputAssembly
         let outputDir = results.GetResult OutputDir
-        let genBarrel = results.GetResult (GenerateBarrel, defaultValue = false)
+        let genBarrel = results.GetResult (GenerateBarrel, defaultValue = true)
         
         match args with
         //        | [||] -> printfn "Please provide an assembly path"
