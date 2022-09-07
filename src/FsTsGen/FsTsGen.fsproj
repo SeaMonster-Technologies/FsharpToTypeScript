@@ -12,6 +12,11 @@
     <Version>0.1.0</Version>
     <FileVersion>0.1.0</FileVersion>
     <InformationalVersion>0.1.0</InformationalVersion>
+    <PackageVersion>0.1.0</PackageVersion>
+    <Authors>Justin Sacks</Authors>
+    <Description>TypeScript DTO generator for FSharp .NET Assemblies</Description>
+    <PackageProjectUrl>https://github.com/SeaMonster-Technologies/FsharpToTypeScript</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/SeaMonster-Technologies/FsharpToTypeScript</RepositoryUrl>
   </PropertyGroup>
 
   <ItemGroup>
