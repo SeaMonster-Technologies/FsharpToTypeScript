@@ -1,8 +1,8 @@
-﻿namespace FsTsGeneration
+﻿namespace FsTsGen
 
 open System
 open System.Reflection
-open FsTsGeneration
+open FsTsGen
 open Microsoft.FSharp.Reflection
 
 
@@ -59,32 +59,6 @@ module Whitespace =
             "\n"
 
     let tab = "    "
-
-
-module Templates =
-
-    [<Literal>]
-    let CaseSuffix = "Case"
-
-    [<Literal>]
-    let Result = "Result"
-
-    let importTemplate name =
-        $"import {{ %s{name} }} from \"./%s{name}\""
-
-    let exportAllTemplate name = $"export * from \"./%s{name}\""
-
-    let interfaceTemplate name fields =
-        $"""
-export interface %s{name} {{
-    %s{fields}
-}}"""
-
-    let unionTemplate name cases =
-        $"""
-export type %s{name} =
-    %s{cases}
-        """
 
 module Typescript =
 

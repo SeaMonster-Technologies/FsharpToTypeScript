@@ -1,7 +1,6 @@
-﻿module FsTsGeneration.PreDefinitions
-
-open System    
-open FsTsGeneration.Typescript
+﻿module FsTsGen.PreDefinitions
+ 
+open FsTsGen.Typescript
 open TSImpl
 
 [<Literal>]

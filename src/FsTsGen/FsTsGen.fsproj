@@ -3,16 +3,24 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>net6.0</TargetFramework>
-    <RootNamespace>fs_ts_generation</RootNamespace>
+    <RootNamespace>FsTsGen</RootNamespace>
+    <PackAsTool>true</PackAsTool>
+    <ToolCommandName>fsTsGen</ToolCommandName>
+    <PackageOutputPath>./nupkg</PackageOutputPath>
   </PropertyGroup>
 
   <ItemGroup>
     <Compile Include="Prelude.fs" />
+    <Compile Include="Templates.fs" />
     <Compile Include="Typescript.fs" />
     <Compile Include="TSImpl.fs" />
     <Compile Include="PreDefinitions.fs" />
     <Compile Include="Generation.fs" />
     <Compile Include="Program.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Argu" Version="6.1.1" />
   </ItemGroup>
 
 </Project>

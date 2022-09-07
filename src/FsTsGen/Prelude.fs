@@ -1,10 +1,18 @@
-﻿namespace FsTsGeneration
+﻿namespace FsTsGen
 
 open System
+open System.Reflection
 open Microsoft.FSharp.Reflection
 
 [<AutoOpen>]
 module Prelude =
+
+    let programName = Assembly.GetExecutingAssembly().GetName().Name
+
+    let programVersion =
+        Assembly.GetExecutingAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>()
+            .InformationalVersion
+        |> string
 
     /// .NET compiles union cases into their own types that inherit from the base union type.
     /// This utility function helps identify the base union type needed for TS generation.

@@ -1,10 +1,8 @@
-﻿module FsTsGeneration.TSImpl
+﻿module FsTsGen.TSImpl
 
 open System
-open System.IO
-open System.Reflection
 open Microsoft.FSharp.Reflection
-open FsTsGeneration.Typescript
+open FsTsGen.Typescript
 
 let withTSExt f = sprintf $"%s{f}.ts"
 

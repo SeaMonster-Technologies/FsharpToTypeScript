@@ -1,11 +1,13 @@
-﻿module FsTsGeneration.Generation
+﻿module FsTsGen.Generation
 
-open System
 open System.IO
 open System.Reflection
-open Microsoft.FSharp.Reflection
-open FsTsGeneration.Typescript
 open TSImpl
+
+type GenerationConfig =
+    { InputAssembly: string
+      OutputDir: string
+      GenerateBarrel: bool }
 
 let writeCompilation path compilationUnit =
     async {
@@ -16,10 +18,11 @@ let writeCompilation path compilationUnit =
         let fullPath = Path.Combine(path, compilationUnit.FileName)
 
         let fileName = $"%s{fullPath}"
-        File.WriteAllText(fileName, compilationUnit.Contents)
+        let contents = $"%s{Templates.fileHeader}%s{Whitespace.newline}%s{compilationUnit.Contents}"
+        File.WriteAllText(fileName, contents)
     }
 
-let mkIndexFile names =
+let mkBarrel names =
     let contents =
         names
         |> Array.map Templates.exportAllTemplate
@@ -34,29 +37,27 @@ let mkPreDefinitions path impls =
     |> Async.Parallel
     |> Async.Ignore
 
-let generateFrom path =
+let generateFrom (cfg: GenerationConfig) =
     async {
-        let asm = Assembly.LoadFrom path
-        let asmFilter = @"SeaMonster.Domain.Process.RuleTypes"
-        let destination = @"C:\tmp\ts-generation"
+        let asm = Assembly.LoadFrom cfg.InputAssembly
 
         let types = asm.GetTypes()
-        //            |> Array.filter (fun t -> t.FullName.StartsWith asmFilter)
 
         let fsImpls = types |> Array.choose TSImpl.tryParse
 
-        do! mkPreDefinitions destination fsImpls
+        do! mkPreDefinitions cfg.OutputDir fsImpls
 
-        do!
-            fsImpls
-            |> Array.map TSImpl.name
-            |> mkIndexFile
-            |> writeCompilation destination
+        if cfg.GenerateBarrel then
+            do!
+                fsImpls
+                |> Array.map TSImpl.name
+                |> mkBarrel
+                |> writeCompilation cfg.OutputDir
 
         do!
             fsImpls
             |> Array.map TSImpl.compile
-            |> Array.map (writeCompilation destination)
+            |> Array.map (writeCompilation cfg.OutputDir)
             |> Async.Parallel
             |> Async.Ignore
     }
