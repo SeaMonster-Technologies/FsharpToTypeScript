@@ -6,7 +6,12 @@
     <RootNamespace>FsTsGen</RootNamespace>
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>fsTsGen</ToolCommandName>
-    <PackageOutputPath>./nupkg</PackageOutputPath>
+    <PackageOutputPath>../../nupkg</PackageOutputPath>
+    <Product>FsTsGen</Product>
+    <AssemblyVersion>0.1.0.0</AssemblyVersion>
+    <Version>0.1.0</Version>
+    <FileVersion>0.1.0</FileVersion>
+    <InformationalVersion>0.1.0</InformationalVersion>
   </PropertyGroup>
 
   <ItemGroup>
