@@ -55,5 +55,6 @@ Eventually, the hope is that this tool can be configured to handle a variety of 
 - [x] Initial version
 - [ ] Add unit tests
 - [ ] Add namespace/module filtering
-- [ ] Add Changelog
+- [x] Add Changelog
 - [ ] Support various serialization options
+- [ ] Add logging

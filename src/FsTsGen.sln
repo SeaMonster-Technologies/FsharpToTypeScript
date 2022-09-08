@@ -8,6 +8,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		..\.gitignore = ..\.gitignore
 		..\global.json = ..\global.json
 		..\README.md = ..\README.md
+		..\CHANGELOG.md = ..\CHANGELOG.md
 	EndProjectSection
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "FsTsGen", "FsTsGen\FsTsGen.fsproj", "{F3D08236-88A9-40F8-A680-DA2D20DF1E78}"

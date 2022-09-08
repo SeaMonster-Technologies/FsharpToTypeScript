@@ -11,14 +11,12 @@ type TSPrimitive =
     | Number
     | String
     | Bool
-    | Date
     override x.ToString() =
         match x with
         | Void -> "void"
         | Number -> "number"
         | String -> "string"
         | Bool -> "boolean"
-        | Date -> "Date"
 
     static member mappings =
         [ typeof<unit>.Name, Void
@@ -33,8 +31,8 @@ type TSPrimitive =
           typeof<string>.Name, String
           typeof<Guid>.Name, String
           typeof<bool>.Name, Bool
-          typeof<DateTimeOffset>.Name, Date
-          typeof<DateTime>.Name, Date ]
+          typeof<DateTimeOffset>.Name, String
+          typeof<DateTime>.Name, String ]
         |> Map.ofList
 
 // Case order is significant; it dictates the order in which modifiers will be applied.
