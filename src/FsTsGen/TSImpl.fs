@@ -33,9 +33,9 @@ type TSImpl =
 
     static member compile x =
         match x with
-        | Union (t, tsUnion, tsInterfaces) ->
-            { FileName = withoutGenericMangling t.Name |> withTSExt
+        | Union (_, tsUnion, tsInterfaces) ->
+            { FileName = tsUnion.UnionName |> withTSExt
               Contents = compileUnion (tsUnion, tsInterfaces) }
-        | Record (t, tsInterface) ->
-            { FileName = withoutGenericMangling t.Name |> withTSExt
+        | Record (_, tsInterface) ->
+            { FileName = tsInterface.InterfaceName |> withTSExt
               Contents = compileInterface tsInterface }

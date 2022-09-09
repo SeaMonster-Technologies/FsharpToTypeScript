@@ -24,11 +24,19 @@ OPTIONS:
     --help                display this list of options.
 ```
 
+Example:
+```shell
+dotnet fsTsGen -in Project.Domain.dll -out ts-generated
+```
+
 ## Motivation
 
-Generating types for an API client has the benefit of keeping clients synchronized with API changes. 
+Generating types for an API client has the benefit of 
+- Keeping clients synchronized with APIs
+- Failing fast on breaking changes
+- Reducing type definition boilerplate
 
-There are tools available, like [NSwag](https://github.com/RicoSuter/NSwag) and [TypeGen](https://github.com/jburzynski/TypeGenDocs/blob/master/source/overview.rst) that exist for this purpose, however they do not typically handle F# types particularly well. This is unfortunate, since the F# and TypeScript type systems have many parallels - Union types for example.
+There are tools available, like [NSwag](https://github.com/RicoSuter/NSwag) and [TypeGen](https://github.com/jburzynski/TypeGenDocs/blob/master/source/overview.rst) that exist for this purpose, however they do not typically handle F# types particularly well. In addition, Giraffe does not currently support Swagger. This is unfortunate, since the F# and TypeScript type systems have many parallels.
 
 This tool aims to cater to APIs written in F# that returns F# types (serialized, of course), consumed by a TypeScript client.
 
@@ -51,10 +59,18 @@ JsonUnionEncoding.ExternalTag
 
 Eventually, the hope is that this tool can be configured to handle a variety of serialization options.
 
-## Next Up (in no particular order)
+## Supported F# types
+
+- [x] Records - map to TypeScript interfaces
+- [x] Discriminated unions - map to TypeScript union types
+- [x] Generic records - map to generic TypeScript interfaces
+- [ ] Generic discriminated unions - not yet supported
+
+## TODO list (in no particular order)
 - [x] Initial version
 - [ ] Add unit tests
 - [ ] Add namespace/module filtering
 - [x] Add Changelog
 - [ ] Support various serialization options
 - [ ] Add logging
+- [ ] Support generic DUs

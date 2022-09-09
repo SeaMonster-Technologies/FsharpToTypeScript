@@ -13,6 +13,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "FsTsGen", "FsTsGen\FsTsGen.fsproj", "{F3D08236-88A9-40F8-A680-DA2D20DF1E78}"
 EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "FsTsGen.Tests", "FsTsGen.Tests\FsTsGen.Tests.fsproj", "{15F68908-4CE8-48A4-B746-848027DC7B31}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -26,5 +28,9 @@ Global
 		{F3D08236-88A9-40F8-A680-DA2D20DF1E78}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F3D08236-88A9-40F8-A680-DA2D20DF1E78}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F3D08236-88A9-40F8-A680-DA2D20DF1E78}.Release|Any CPU.Build.0 = Release|Any CPU
+		{15F68908-4CE8-48A4-B746-848027DC7B31}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{15F68908-4CE8-48A4-B746-848027DC7B31}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{15F68908-4CE8-48A4-B746-848027DC7B31}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{15F68908-4CE8-48A4-B746-848027DC7B31}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

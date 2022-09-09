@@ -180,6 +180,15 @@ module Typescript =
             FSharpType.GetUnionCases unionType
             |> Array.map (convertUnionCase unionType.Name)
 
+        // TODO genericArgs needs to be propagated to the appropriate union fields.
+        let unionName, genericArgs =
+            if unionType.IsGenericType then
+                $"%s{withoutGenericMangling unionType.Name}",
+                unionType.GetGenericArguments()
+                |> Array.map (fun t -> t.Name)
+            else
+                unionType.Name, [||]
+
         let cases: TSUnionCase [] =
             fieldInterfaces
             |> Array.map (fun f ->
@@ -190,7 +199,7 @@ module Typescript =
                     else
                         Some f.InterfaceName })
 
-        { UnionName = unionType.Name
+        { UnionName = unionName
           UnionCases = cases },
         fieldInterfaces
         |> Array.filter (fun i -> i.Fields.Length > 0)

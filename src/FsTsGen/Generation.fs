@@ -4,6 +4,8 @@ open System.IO
 open System.Reflection
 open TSImpl
 
+let mutable writeHeader = false
+
 type GenerationConfig =
     { InputAssembly: string
       OutputDir: string
@@ -18,7 +20,13 @@ let writeCompilation path compilationUnit =
         let fullPath = Path.Combine(path, compilationUnit.FileName)
 
         let fileName = $"%s{fullPath}"
-        let contents = $"%s{Templates.fileHeader}%s{Whitespace.newline}%s{compilationUnit.Contents}"
+
+        let contents =
+            if writeHeader then
+                $"%s{Templates.fileHeader}%s{Whitespace.newline}%s{compilationUnit.Contents}"
+            else
+                $"%s{compilationUnit.Contents}"
+
         File.WriteAllText(fileName, contents)
     }
 
