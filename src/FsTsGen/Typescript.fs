@@ -87,8 +87,11 @@ module Typescript =
         | None -> Custom propType.Name
 
     let rec getTypeMapping propertyType =
-        if isListOrArray propertyType then
+        if isList propertyType then
             let typeMapping, mods = getTypeMapping propertyType.GenericTypeArguments[0]
+            typeMapping, TSArray :: mods
+        elif isArray propertyType then
+            let typeMapping, mods = getTypeMapping <| propertyType.GetElementType()
             typeMapping, TSArray :: mods
         elif isOption propertyType then
             let typeMapping, mods = getTypeMapping propertyType.GenericTypeArguments[0]

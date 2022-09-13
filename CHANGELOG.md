@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 ### Removed
 
+## [0.1.2]
+### Added
+- Check for duplicate/conflicting type names
+### Changed
+- Fixed issue with array generation
 
 ## [0.1.1] - 2022-09-08
 ### Added
@@ -21,6 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Initial Version
 
-[Unreleased]: https://github.com/SeaMonster-Technologies/FsharpToTypeScript/compare/v0.1.1...HEAD
+[Unreleased]: https://github.com/SeaMonster-Technologies/FsharpToTypeScript/compare/v0.1.2...HEAD
+[0.1.2]: https://github.com/SeaMonster-Technologies/FsharpToTypeScript/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/SeaMonster-Technologies/FsharpToTypeScript/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/SeaMonster-Technologies/FsharpToTypeScript/releases/tag/v0.1.0

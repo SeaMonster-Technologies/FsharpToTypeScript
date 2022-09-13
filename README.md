@@ -38,7 +38,7 @@ Generating types for an API client has the benefit of
 
 There are tools available, like [NSwag](https://github.com/RicoSuter/NSwag) and [TypeGen](https://github.com/jburzynski/TypeGenDocs/blob/master/source/overview.rst) that exist for this purpose, however they do not typically handle F# types particularly well. In addition, Giraffe does not currently support Swagger. This is unfortunate, since the F# and TypeScript type systems have many parallels.
 
-This tool aims to cater to APIs written in F# that returns F# types (serialized, of course), consumed by a TypeScript client.
+This tool aims to cater to APIs written in F# that return F# types (serialized, of course), consumed by a TypeScript client.
 
 ## Non-Invasiveness
 
@@ -53,8 +53,8 @@ It is recommended to use the serialization extensions in [FSharp.SystemTextJson]
 ```f#
 JsonUnionEncoding.ExternalTag
 ||| JsonUnionEncoding.UnwrapFieldlessTags
-||| JsonUnionEncoding.UnwrapOption
-||| JsonUnionEncoding.UnwrapRecordCases
+||| JsonUnionEncoding.NamedFields
+||| JsonUnionEncoding.UnwrapOption)
 ```
 
 Eventually, the hope is that this tool can be configured to handle a variety of serialization options.

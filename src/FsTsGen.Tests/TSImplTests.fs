@@ -22,6 +22,7 @@ type Employee =
 
 type Delivery =
     { Products: string list
+      SpecialItems: string array
       Priority: int option
       Customers: string list option }
 
@@ -128,6 +129,10 @@ let ``Type modifiers are applied`` () =
                      FieldType = "string"
                      Imports = [||]
                      FieldModifiers = [ TSArray ] }
+                   { FieldName = "specialItems"
+                     FieldType = "string"
+                     Imports = [||]
+                     FieldModifiers = [ TSArray ] }
                    { FieldName = "priority"
                      FieldType = "number"
                      Imports = [||]
@@ -144,7 +149,7 @@ let ``Type modifiers are applied`` () =
 [<Test>]
 let ``Generic discriminated union types are parsed`` () =
     let actual =
-        typeof<DUWrapper<int>>.GetGenericTypeDefinition()
+        typeof<DUWrapper<int>>.GetGenericTypeDefinition ()
         |> TSImpl.tryParse
         |> Option.get
 
@@ -158,7 +163,7 @@ let ``Generic discriminated union types are parsed`` () =
         let is =
             [| { InterfaceName = "Field"
                  IsCaseInterface = true
-//                 GenericArgs = [| "a" |]
+                 //                 GenericArgs = [| "a" |]
                  GenericArgs = [||] // TODO: This is not supported yet
                  Fields =
                    [| { FieldName = "f"
@@ -166,14 +171,14 @@ let ``Generic discriminated union types are parsed`` () =
                         Imports = [||]
                         FieldModifiers = [] } |] } |]
 
-        Union(typeof<DUWrapper<int>>.GetGenericTypeDefinition(), u, is)
+        Union(typeof<DUWrapper<int>>.GetGenericTypeDefinition (), u, is)
 
     Assert.AreEqual(expected, actual)
 
 [<Test>]
 let ``Generic record types are parsed`` () =
     let actual =
-        typeof<RecordWrapper<int>>.GetGenericTypeDefinition()
+        typeof<RecordWrapper<int>>.GetGenericTypeDefinition ()
         |> TSImpl.tryParse
         |> Option.get
 
@@ -188,6 +193,6 @@ let ``Generic record types are parsed`` () =
                      Imports = [||]
                      FieldModifiers = [] } |] }
 
-        Record(typeof<RecordWrapper<int>>.GetGenericTypeDefinition(), i)
+        Record(typeof<RecordWrapper<int>>.GetGenericTypeDefinition (), i)
 
     Assert.AreEqual(expected, actual)

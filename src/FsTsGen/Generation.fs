@@ -9,7 +9,8 @@ let mutable writeHeader = false
 type GenerationConfig =
     { InputAssembly: string
       OutputDir: string
-      GenerateBarrel: bool }
+      GenerateBarrel: bool
+      Force: bool }
 
 let writeCompilation path compilationUnit =
     async {
@@ -45,27 +46,55 @@ let mkPreDefinitions path impls =
     |> Async.Parallel
     |> Async.Ignore
 
-let generateFrom (cfg: GenerationConfig) =
+let private loadTypes (cfg: GenerationConfig) =
     async {
         let asm = Assembly.LoadFrom cfg.InputAssembly
 
         let types = asm.GetTypes()
 
-        let fsImpls = types |> Array.choose TSImpl.tryParse
+        return types |> Array.choose TSImpl.tryParse
+    }
 
-        do! mkPreDefinitions cfg.OutputDir fsImpls
+let checkForDuplicateNames tsImpls =
+    let duplicates =
+        tsImpls
+        |> Array.groupBy TSImpl.name
+        |> Array.filter (fun (_, impls) -> impls.Length > 1)
+        |> Array.map fst
 
-        if cfg.GenerateBarrel then
+    duplicates
+
+let generateFrom (cfg: GenerationConfig) =
+    async {
+        let! tsImpls = loadTypes cfg
+
+        let proceed =
+            match checkForDuplicateNames tsImpls with
+            | [||] -> true
+            | duplicates ->
+                let log = duplicates |> String.concat "\n"
+                printfn "Detected conflicting type names. Please use -f if you want to proceed:"
+                printfn $"%s{log}"
+                cfg.Force
+
+        if proceed then
+            do! mkPreDefinitions cfg.OutputDir tsImpls
+
+            if cfg.GenerateBarrel then
+                do!
+                    tsImpls
+                    |> Array.map TSImpl.name
+                    |> mkBarrel
+                    |> writeCompilation cfg.OutputDir
+
             do!
-                fsImpls
-                |> Array.map TSImpl.name
-                |> mkBarrel
-                |> writeCompilation cfg.OutputDir
+                tsImpls
+                |> Array.map TSImpl.compile
+                |> Array.map (writeCompilation cfg.OutputDir)
+                |> Async.Parallel
+                |> Async.Ignore
 
-        do!
-            fsImpls
-            |> Array.map TSImpl.compile
-            |> Array.map (writeCompilation cfg.OutputDir)
-            |> Async.Parallel
-            |> Async.Ignore
+            return 0
+        else
+            return 1
     }

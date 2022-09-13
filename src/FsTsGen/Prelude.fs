@@ -24,11 +24,12 @@ module Prelude =
         t.IsGenericType
         && t.GetGenericTypeDefinition() = typedefof<Microsoft.FSharp.Core.Option<_>>
 
-    let isListOrArray (t: Type) =
+    let isList (t: Type) =
         t.IsGenericType
         && (t.GetGenericTypeDefinition() = typedefof<Microsoft.FSharp.Collections.List<_>>
-            || t.GetGenericTypeDefinition() = typedefof<Microsoft.FSharp.Core.array<_>>
             || t.GetGenericTypeDefinition() = typedefof<System.Collections.Generic.IEnumerable<_>>)
+
+    let isArray (t: Type) = t.IsArray
 
     let isResult (t: Type) =
         t.IsGenericType
