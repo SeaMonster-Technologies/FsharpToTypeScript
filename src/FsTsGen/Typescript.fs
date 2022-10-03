@@ -154,7 +154,7 @@ module Typescript =
         let fields =
             fieldInfo.GetFields()
             |> Array.map (convertRecordField parentTypeName)
-
+            
         { InterfaceName = fieldInfo.Name
           GenericArgs = [||]
           IsCaseInterface = true
@@ -191,21 +191,26 @@ module Typescript =
                 |> Array.map (fun t -> t.Name)
             else
                 unionType.Name, [||]
+                
+        let applyParentName interfaceName =
+            $"%s{withoutGenericMangling unionType.Name}%s{interfaceName}"
 
         let cases: TSUnionCase [] =
             fieldInterfaces
             |> Array.map (fun f ->
-                { CaseName = f.InterfaceName
-                  CaseType =
+                let caseType =
                     if Array.isEmpty f.Fields then
                         None
                     else
-                        Some f.InterfaceName })
+                        Some (applyParentName f.InterfaceName)
+                { CaseName = f.InterfaceName
+                  CaseType = caseType })
 
         { UnionName = unionName
           UnionCases = cases },
         fieldInterfaces
         |> Array.filter (fun i -> i.Fields.Length > 0)
+        |> Array.map (fun i -> { i with InterfaceName = applyParentName i.InterfaceName })
 
     let private applyFieldModifiers (f: TSField) =
         f.FieldModifiers

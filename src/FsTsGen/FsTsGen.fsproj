@@ -8,11 +8,11 @@
     <ToolCommandName>fsTsGen</ToolCommandName>
     <PackageOutputPath>../../nupkg</PackageOutputPath>
     <Product>FsTsGen</Product>
-    <AssemblyVersion>0.1.2.0</AssemblyVersion>
-    <Version>0.1.2</Version>
-    <FileVersion>0.1.2</FileVersion>
-    <InformationalVersion>0.1.2</InformationalVersion>
-    <PackageVersion>0.1.2</PackageVersion>
+    <AssemblyVersion>0.1.3.0</AssemblyVersion>
+    <Version>0.1.3</Version>
+    <FileVersion>0.1.3</FileVersion>
+    <InformationalVersion>0.1.3</InformationalVersion>
+    <PackageVersion>0.1.3</PackageVersion>
     <Authors>Justin Sacks</Authors>
     <Description>TypeScript DTO generator for FSharp .NET Assemblies</Description>
     <PackageProjectUrl>https://github.com/SeaMonster-Technologies/FsharpToTypeScript</PackageProjectUrl>

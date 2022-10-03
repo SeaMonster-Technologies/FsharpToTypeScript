@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 ### Removed
 
+## [0.1.3]
+### Added
+### Changed
+- Use union type name as prefix for case interfaces that have one or more fields
+### Removed
+
 ## [0.1.2]
 ### Added
 - Check for duplicate/conflicting type names
@@ -26,7 +32,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Initial Version
 
-[Unreleased]: https://github.com/SeaMonster-Technologies/FsharpToTypeScript/compare/v0.1.2...HEAD
+[Unreleased]: https://github.com/SeaMonster-Technologies/FsharpToTypeScript/compare/v0.1.3...HEAD
+[0.1.3]: https://github.com/SeaMonster-Technologies/FsharpToTypeScript/compare/v0.1.2...v0.1.3
 [0.1.2]: https://github.com/SeaMonster-Technologies/FsharpToTypeScript/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/SeaMonster-Technologies/FsharpToTypeScript/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/SeaMonster-Technologies/FsharpToTypeScript/releases/tag/v0.1.0

@@ -38,7 +38,7 @@ export interface Employee {
 let ``Discriminated Unions are generated correctly`` () =
     let expected =
         """
-export interface HrCase {
+export interface Position_HrCase {
     isToby: boolean
 }
 export type Position =
@@ -61,7 +61,7 @@ export type Position =
                      CaseType = Some "Hr" } |] }
 
         let is =
-            [| { InterfaceName = "Hr"
+            [| { InterfaceName = "Position_Hr"
                  IsCaseInterface = true
                  GenericArgs = [||]
                  Fields =

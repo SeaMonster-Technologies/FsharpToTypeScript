@@ -69,12 +69,13 @@ let ``Discriminated Unions are parsed correctly`` () =
                      CaseType = None }
                    { CaseName = "AssistantToTheRegionalManager"
                      CaseType = None }
-                   { CaseName = "Sales"; CaseType = None }
+                   { CaseName = "Sales"
+                     CaseType = None }
                    { CaseName = "Hr"
-                     CaseType = Some "Hr" } |] }
+                     CaseType = Some "PositionHr" } |] }
 
         let is =
-            [| { InterfaceName = "Hr"
+            [| { InterfaceName = "PositionHr"
                  IsCaseInterface = true
                  GenericArgs = [||]
                  Fields =
@@ -99,10 +100,10 @@ let ``Discriminated Unions with recursive reference are parsed correctly`` () =
                 [| { CaseName = "Scranton"
                      CaseType = None }
                    { CaseName = "Other"
-                     CaseType = Some "Other" } |] }
+                     CaseType = Some "BranchOther" } |] }
 
         let is =
-            [| { InterfaceName = "Other"
+            [| { InterfaceName = "BranchOther"
                  IsCaseInterface = true
                  GenericArgs = [||]
                  Fields =
@@ -158,10 +159,10 @@ let ``Generic discriminated union types are parsed`` () =
             { UnionName = "DUWrapper"
               UnionCases =
                 [| { CaseName = "Field"
-                     CaseType = Some "Field" } |] }
+                     CaseType = Some "DUWrapperField" } |] }
 
         let is =
-            [| { InterfaceName = "Field"
+            [| { InterfaceName = "DUWrapperField"
                  IsCaseInterface = true
                  //                 GenericArgs = [| "a" |]
                  GenericArgs = [||] // TODO: This is not supported yet
